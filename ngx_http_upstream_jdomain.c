@@ -478,20 +478,17 @@ ngx_http_upstream_jdomain(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
   ngx_memzero(&u, sizeof(ngx_url_t));
   u.url = domain;
   u.default_port = (in_port_t) urcf->default_port;
-  if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
-    if (u.err) {
-      ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "%s in upstream \"%V\"", u.err, &u.url);
-    }
 
-		/* In case the error is a resolution issue, do not prevent nginx from starting
-			and let the resolution happen again later */
-		const char *rslverr = "host not found";
-		if (strlen(u.err) == strlen(rslverr)
-			&& ngx_strncmp(u.err, rslverr, strlen(rslverr)) == 0) {
-			return NGX_CONF_OK;
+	for (i = 0; i < 2; i++) {
+		u.no_resolve = (i == 0);
+    if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
+      if (u.err) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "%s in upstream \"%V\"", u.err, &u.url);
+      }
+      if (u.no_resolve) {
+        return NGX_CONF_ERROR;
+      }
 		}
-
-		return NGX_CONF_ERROR;
 	}
 
   for (i=0; i<u.naddrs; i++) {
