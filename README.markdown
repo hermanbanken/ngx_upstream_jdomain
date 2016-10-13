@@ -18,14 +18,15 @@ Usage:
 	
 	resolver 8.8.8.8; #Your Local DNS Server
                                                                                                     
-<directive> `hostname`: 
+directive `hostname`: 
 
-	* Syntax: hostname <domain-name> [port=80] [max_ips=20] [interval=1] [retry_off]
+	* Syntax: hostname <domain-name> [port=80] [max_ips=20] [interval=1] [retry_off] [no_fail]
 	* Context:    upstream                                                                          
 	* port:       Backend's listening port.                                                         
 	* max_ips:    IP buffer size.
 	* interval:   How many seconds to resolve domain name.
 	* retry_off:  Do not retry if one IP fails. 
+	* no_fail:    Do not exit with error in case domain name resolution fails at startup. 
 
 See https://www.nginx.com/resources/wiki/modules/domain_resolve/ for details.
 
