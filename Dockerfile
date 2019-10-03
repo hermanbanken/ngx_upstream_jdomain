@@ -7,13 +7,11 @@ FROM base AS builder
 # ENV NGINX_VERSION 1.15.0
 
 # Our module version
-ENV MODULE_NAME nginx-upstream-dynamic-servers
-ENV MODULE_VERSION master
-ENV MODULE_REPOSLUG https://github.com/hermanbanken/ngx_upstream_jdomain
+ENV MODULE_NAME ngx_http_upstream_jdomain_module
+ENV MODULE_DIR /nginx-module
 
 # Download sources
-RUN wget "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" -O nginx.tar.gz && \
-  wget "${MODULE_REPOSLUG}/archive/${MODULE_VERSION}.tar.gz" -O dynamic-module.tar.gz
+RUN wget "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" -O nginx.tar.gz
 
 # For latest build deps, see https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
 RUN apk add --no-cache --virtual .build-deps \
@@ -30,17 +28,19 @@ RUN apk add --no-cache --virtual .build-deps \
   gd-dev \
   geoip-dev
 
+# Copy module
+RUN mkdir /nginx-module
+COPY config ngx_http_upstream_jdomain.c /nginx-module/
+
 # Reuse same cli arguments as the nginx:alpine image used to build
 RUN CONFARGS=$(nginx -V 2>&1 | sed -n -e 's/^.*arguments: //p') \
 	mkdir -p /usr/src && \
   tar -zxC /usr/src -f nginx.tar.gz && \
-  tar -xzvf "dynamic-module.tar.gz" && \
-  MODULEDIR="$(pwd)${MODULE_NAME}-${MODULE_VERSION}" && \
   cd /usr/src/nginx-$NGINX_VERSION && \
-  sh -c "./configure --with-compat $CONFARGS --add-module=$MODULEDIR" && \
-  make && make install
+  sh -c "./configure --with-compat $CONFARGS --add-dynamic-module=$MODULE_DIR" && \
+  make modules
+RUN sh -c "cp /usr/src/nginx-$NGINX_VERSION/objs/ngx_http_upstream_jdomain_module.so /etc/nginx/modules/"
 
 FROM base
 LABEL version="1.0" maintainer="Herman Banken <hermanbanken@gmail.com>" repository="https://github.com/hermanbanken/ngx_upstream_jdomain"
-# Replace bundled NGINX with patched NGINX
-COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
+COPY --from=builder /etc/nginx/modules/ngx_http_upstream_jdomain_module.so /etc/nginx/modules/
