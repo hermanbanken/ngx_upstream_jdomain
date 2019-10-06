@@ -9,24 +9,28 @@ Installation:
 	make
 	make install
 
+Alternatively, you can use the module as a dynamic module. This allows you to use a maintained NGINX base image. Extract the module `.so` file from the docker build of this repository & place it into /etc/nginx/modules. Then load it using:
+
+	load_module modules/ngx_http_upstream_jdomain_module.so;
+
 Usage:
 
-	upstream backend {                                                                              
-		hostname www.brightcove.com; #port=80                                                             
-		#hostname www.brightcove.com port=8080; #port=8080
+	upstream backend {
+		hostname example.com;
+		#hostname example.com port=8080 interval=5;
 	}
-	
-	resolver 8.8.8.8; #Your Local DNS Server
-                                                                                                    
-directive `hostname`: 
+
+	resolver 8.8.8.8; #Your Local DNS Server (use 127.0.0.11 for Docker)
+
+directive `hostname`:
 
 	* Syntax: hostname <domain-name> [port=80] [max_ips=20] [interval=1] [retry_off] [no_fail]
-	* Context:    upstream                                                                          
-	* port:       Backend's listening port.                                                         
+	* Context:    upstream
+	* port:       Backend's listening port.
 	* max_ips:    IP buffer size.
 	* interval:   How many seconds to resolve domain name.
-	* retry_off:  Do not retry if one IP fails. 
-	* no_fail:    Do not exit with error in case domain name resolution fails at startup. 
+	* retry_off:  Do not retry if one IP fails.
+	* no_fail:    Do not exit with error in case domain name resolution fails at startup.
 
 See https://www.nginx.com/resources/wiki/modules/domain_resolve/ for details.
 
